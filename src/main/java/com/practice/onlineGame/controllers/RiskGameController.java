@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
+import java.security.Principal;
 
 @RequestMapping("/game/risk")
 @RestController
@@ -26,6 +27,14 @@ public class RiskGameController {
         game = riskGameService.createRiskGame(game);
         return new ResponseEntity<RiskGame>(game, HttpStatus.CREATED);
 
+    }
+
+    @GetMapping("/{tag}")
+    public ResponseEntity<?> getGameById(@PathVariable String tag) {
+
+        RiskGame game = riskGameService.findByTag(tag);
+
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
 
     @Autowired

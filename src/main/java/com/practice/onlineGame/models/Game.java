@@ -12,6 +12,7 @@ public abstract class Game {
     protected Long id;
 
     @NotBlank(message = "Tag field is required")
+    @Column(updatable = false, unique = true)
     protected String tag;
 
     public Long getId() {

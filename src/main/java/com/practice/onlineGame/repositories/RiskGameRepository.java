@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RiskGameRepository extends CrudRepository<RiskGame, Long> {
-
+    RiskGame findByTag(String tag);
 }
+
