@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 public class RiskGameService {
 
     private final RiskGameRepository riskGameRepository;
-
     public RiskGame createRiskGame(RiskGame game) {
         return riskGameRepository.save(game);
     }

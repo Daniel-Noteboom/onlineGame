@@ -3,16 +3,25 @@ package com.practice.onlineGame.models.risk;
 
 import com.practice.onlineGame.models.Game;
 
-import javax.persistence.Entity;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Date;
+import java.util.Scanner;
 
 @Entity
 public class RiskGame extends Game {
+    private static final String FILE_LOCATION = "src/main/resources/static/standard_board_one_line.txt";
     private Phase phase;
     private Date createAt;
     private Date updateAt;
+    @OneToOne(fetch = FetchType.EAGER, cascade=CascadeType.ALL)
+    @JoinColumn(name="board_id",nullable = false)
+    private Board board;
+    @NotNull(message= "Number of players may not be empty")
+    @Column(updatable = false)
+    private Integer numPlayers;
     public enum Phase {
         DRAFT,
         ATTACK,
@@ -45,8 +54,17 @@ public class RiskGame extends Game {
         this.updateAt = updateAt;
     }
 
-    public RiskGame() {
+    public RiskGame() throws FileNotFoundException {
         this.phase = Phase.PREGAME;
+        this.board = new Board(new Scanner(new File(FILE_LOCATION)).nextLine());
+    }
+
+    public int getNumPlayers() {
+        return numPlayers;
+    }
+
+    public void setNumPlayers(int numPlayers) {
+        this.numPlayers = numPlayers;
     }
 
     @PrePersist
