@@ -29,7 +29,7 @@ public class RiskGameController {
 
     }
 
-    //Happy path
+    //Happy path-will add error path later
     @GetMapping("/{tag}")
     public ResponseEntity<?> getGameById(@PathVariable String tag) {
 
