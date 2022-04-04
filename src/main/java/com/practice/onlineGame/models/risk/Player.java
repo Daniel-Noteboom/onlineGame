@@ -15,6 +15,9 @@ public class Player {
     private boolean out;
     private boolean attackThisTurn;
 
+    public Player() {
+
+    }
     public Player(String name) {
         this.name = name;
         this.cards = new ArrayList<Card>();

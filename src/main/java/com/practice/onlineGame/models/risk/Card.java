@@ -23,6 +23,9 @@ public class Card {
 
     private String country;
 
+    public Card() {
+    }
+
     public Card(Type type, String country) {
         this.type = type;
         this.country = country;

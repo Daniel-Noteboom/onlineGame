@@ -50,12 +50,8 @@ public class RiskGame extends Game {
     @OneToOne(fetch = FetchType.EAGER, cascade=CascadeType.ALL)
     @JoinColumn(name="board_id",nullable = false)
     private Board board;
-    @NotNull(message= "Number of players may not be empty")
-    @Column(updatable = false)
-    @Min(3)
-    @Max(6)
-    private Integer numPlayers;
-    @OneToMany
+
+    @OneToMany(cascade=CascadeType.PERSIST)
     @JoinTable(name = "risk_game_players",
             joinColumns = {@JoinColumn(name = "player_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "game_id", referencedColumnName = "id")})
@@ -81,6 +77,7 @@ public class RiskGame extends Game {
     private String currentAttackCountry;
 
     //Variables dealing with adding troops on first turn
+    private static final int MINIMUM_PLAYERS = 3;
     private static final int[][] FIRST_TURN_TROOPS = {{0,0,1}, {0,0,0,1}, {0,0,0,1,2}, {0,0,0,1,2,3}};
     private static final int MINIMUM_TROOPS_ADDED = 3;
     private static final int COUNTRY_TROOP_DIVISOR = 3;
@@ -122,20 +119,11 @@ public class RiskGame extends Game {
     }
 
     public void addPlayer(Player p) {
-        numPlayers++;
         players.add(p);
     }
 
     public void removePlayer(Player p) {
-        numPlayers--;
         players.remove(p);
-    }
-    public int getNumPlayers() {
-        return numPlayers;
-    }
-
-    public void setNumPlayers(int numPlayers) {
-        this.numPlayers = numPlayers;
     }
 
     @PrePersist
@@ -146,5 +134,102 @@ public class RiskGame extends Game {
     @PreUpdate
     protected void onUpdate(){
         this.updateAt = new Date();
+    }
+
+    /**
+     *     Creates a randomly populated board with the appropriate number of troops. The first player has priority.
+     *     Each country is randomly populated according to the rules of Risk. No country can have more than one troop
+     *     until all countries have been populated with at least one troop and troops are added one at at time beginning
+     *     with the starting player. Clears the board if there is already troops there
+     */
+
+    public void startGame() {
+        startingPlayerIndex = (int) (Math.random() * players.size());
+        currentPlayerIndex = startingPlayerIndex;
+        randomlyPopulateBoard();
+    }
+    private void randomlyPopulateBoard() {
+        board.clearTroops();
+        int numberTroopsAdd = STARTING_TROOPS[players.size() - MINIMUM_PLAYERS];
+        int countriesOccupied = 0;
+        //Randomly populate the countries with one troop each, starting with the first player
+        while (!(countriesOccupied == board.numberCountries())) {
+
+            Country currentCountry = board.randomUnoccupiedCountry(countriesOccupied);
+
+            currentCountry.changeOccupant(players.get(currentPlayerIndex), 1);
+
+            countriesOccupied++;
+            //Check to see if we have completed a full round of adding troops
+            if(isFullTurnCycle()) {
+                numberTroopsAdd--;
+            }
+            nextPlayer();
+
+
+        }
+
+        while (numberTroopsAdd != 0) {
+            board.increaseTroops(board.randomCountry(players.get(currentPlayerIndex)), 1);
+            if(isFullTurnCycle()) {
+                numberTroopsAdd--;
+            }
+            nextPlayer();
+
+        }
+
+        if(phase != Phase.DRAFT) {
+            changePhase();
+        }
+    }
+
+    /** Returns and sets the number of troops that the current player can reinforce with
+     * If the game phase is not correct 0 is returned **/
+    private int setInitialReinforceTroopNumber() {
+        if(!(phase == Phase.DRAFT)) {
+            return 0;
+        }
+        int extraTroops = 0;
+
+        if(firstTurn) {
+            extraTroops = FIRST_TURN_TROOPS[players.size() - MINIMUM_PLAYERS][currentPlayerIndex];
+        }
+        currentReinforceTroopsNumber = Math.max(board.countriesOccupied(players.get(currentPlayerIndex)).size() / COUNTRY_TROOP_DIVISOR,
+                MINIMUM_TROOPS_ADDED) + extraTroops + board.troopsFromContinents(players.get(currentPlayerIndex));
+        return currentReinforceTroopsNumber;
+    }
+
+    /** Helper method that returns whether all players have completed an entire cycle. This does not determine whether the final player
+     in the cycle has completed their moves. The method should be called at the appropriate time (when the current player
+     has finished their turn.**/
+    private boolean isFullTurnCycle() {
+        return currentPlayerIndex == (startingPlayerIndex == 0 ? players.size() - 1 : startingPlayerIndex - 1);
+    }
+
+    private void changePhase() {
+        if(phase == Phase.PREGAME) {
+            phase = Phase.DRAFT;
+            setInitialReinforceTroopNumber();
+        } else if(phase == Phase.DRAFT) {
+            phase = Phase.ATTACK;
+        } else if(phase == Phase.ATTACK) {
+            phase = Phase.FORTIFY;
+        } else if(phase == Phase.FORTIFY) {
+            if(firstTurn && isFullTurnCycle()) {
+                firstTurn = false;
+            }
+            phase = Phase.DRAFT;
+            nextPlayer();
+            setInitialReinforceTroopNumber();
+        }
+    }
+
+
+    //Helper method Changes board state so that is now the next player's turn.
+    private void nextPlayer() {
+        currentPlayerIndex = currentPlayerIndex == players.size() - 1 ? 0 : currentPlayerIndex + 1;
+        if(players.get(currentPlayerIndex).isOut()) {
+            nextPlayer();
+        }
     }
 }

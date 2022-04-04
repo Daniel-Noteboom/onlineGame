@@ -23,6 +23,8 @@ public class Country {
     @JoinColumn(name="player_id")
     private Player occupant;
 
+    public Country() {
+    }
 
     //Create Country give name. Sets troops to 0 and player to null
     public Country(String name) {

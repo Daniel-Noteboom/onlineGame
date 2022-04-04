@@ -1,5 +1,6 @@
 package com.practice.onlineGame.controllers;
 
+import com.practice.onlineGame.models.risk.Player;
 import com.practice.onlineGame.models.risk.RiskGame;
 import com.practice.onlineGame.repositories.RiskGameRepository;
 import com.practice.onlineGame.services.ErrorCheckService;
@@ -28,6 +29,7 @@ public class RiskGameController {
 
     }
 
+    //Happy path
     @GetMapping("/{tag}")
     public ResponseEntity<?> getGameById(@PathVariable String tag) {
 
@@ -36,9 +38,29 @@ public class RiskGameController {
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
 
+    @PostMapping("/{tag}/add_player/{player_name}")
+    public ResponseEntity<?> addPlayer(@PathVariable String tag, @PathVariable String player_name) {
+        RiskGame game = riskGameService.findByTag(tag);
+
+        game.addPlayer(new Player(player_name));
+
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+    //Happy path
+    @PostMapping("/{tag}/start_game")
+    public ResponseEntity<?> startGame(@PathVariable String tag) {
+
+        RiskGame game = riskGameService.findByTag(tag);
+        game.startGame();
+        //Randomly populate
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
     @Autowired
     public RiskGameController(RiskGameRepository riskGameRepository) {
         this.errorCheck = new ErrorCheckService();
         this.riskGameService = new RiskGameService(riskGameRepository);
     }
+
+
 }

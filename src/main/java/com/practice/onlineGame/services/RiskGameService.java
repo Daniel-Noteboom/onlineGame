@@ -1,6 +1,7 @@
 package com.practice.onlineGame.services;
 
 import com.practice.onlineGame.exceptions.GameTagException;
+import com.practice.onlineGame.models.risk.Player;
 import com.practice.onlineGame.models.risk.RiskGame;
 import com.practice.onlineGame.repositories.RiskGameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,5 +27,9 @@ public class RiskGameService {
             throw new GameTagException("Game tag '" + tag + "' does not exist");
         }
         return game;
+    }
+
+    public RiskGame saveRiskGame(RiskGame game) {
+
     }
 }

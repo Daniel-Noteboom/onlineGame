@@ -18,6 +18,8 @@ public class Continent {
     private Set<Country> countries;
     private String name;
 
+    public Continent() {
+    }
     public Continent(int troopNumber, Set<Country> countries, String name) {
         this.troopNumber = troopNumber;
         this.countries = Collections.unmodifiableSet(countries);
