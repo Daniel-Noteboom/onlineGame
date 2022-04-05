@@ -85,6 +85,56 @@ public class Board {
         return countryNames.get(countryName);
     }
 
+    public Set<Continent> getContinents() {
+        return continents;
+    }
+
+    public Player getOccupant(String country) {
+        return getCountry(country).getOccupant();
+    }
+
+    public void reduceTroops(String country, int troops) {
+        getCountry(country).reduceTroops(troops);
+    }
+
+    public void increaseTroops(String country, int troops) {
+        getCountry(country).increaseTroops(troops);
+    }
+
+    public int getTroopCount(String country) {
+        return getCountry(country).getTroopCount();
+    }
+
+    public void changeOccupant(String country, Player occupant, int troops) {
+        getCountry(country).changeOccupant(occupant, troops);
+    }
+
+    //Returns whether this board contains this country
+    public boolean containsCountry(String country) {
+        return countryNames.containsKey(country);
+    }
+
+    //Returns whether Country A is bordering Country B
+    public boolean isBordering(String countryA, String countryB) {
+        return getCountry(countryA).borders(getCountry(countryB));
+    }
+    /**
+     * Determines whether the player is done or not. They are done if they no longer control any countries
+     * @param player The player that we're seeing is done
+     * @return Whether the player is done
+     */
+    public boolean playerFinished(Player player) {
+        for(Country c: countryNames.values()) {
+            if(c.getOccupant() == player) {
+                return false;
+            }
+        }
+        return true;
+    }
+    public Map<String, Country> getCountryNames() {
+        return countryNames;
+    }
+
     public void clearTroops() {
         for(Country c: countryNames.values()) {
             c.changeOccupant(null, 0);
@@ -133,9 +183,6 @@ public class Board {
             }
         }
         return playerCountries;
-    }
-    public void increaseTroops(String country, int troops) {
-        countryNames.get(country).increaseTroops(troops);
     }
 
     public int numberCountries() {

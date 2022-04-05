@@ -13,6 +13,10 @@ public class Country {
     private String name; //current name
     private int troops; //current level of troops
 
+    public int getTroops() {
+        return troops;
+    }
+
     @ManyToMany(cascade = CascadeType.REFRESH)
     @JoinTable(name = "bordering_countries",
             joinColumns = {@JoinColumn(name = "country_id", referencedColumnName = "id")},
@@ -73,6 +77,9 @@ public class Country {
         this.troops = troops;
     }
 
+    public boolean borders(Country c) {
+        return borderingCountries.contains(c);
+    }
     @Override
     public String toString() {
         return name;

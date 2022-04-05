@@ -1,5 +1,7 @@
 package com.practice.onlineGame.models.risk;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +12,14 @@ public class Player {
     @Column(updatable = false, nullable = false)
     protected Long id;
     private String name;
+    @JsonIgnore
+    @JoinTable(name = "risk_game_cards",
+            joinColumns = {@JoinColumn(name = "card_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "player_id", referencedColumnName = "id")})
+    @OrderColumn
     @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     private List<Card> cards;
-    private boolean out;
+    private boolean isOut;
     private boolean attackThisTurn;
 
     public Player() {
@@ -20,8 +27,8 @@ public class Player {
     }
     public Player(String name) {
         this.name = name;
+        this.isOut = false;
         this.cards = new ArrayList<Card>();
-        this.out = false;
         this.attackThisTurn = false;
     }
 
@@ -34,11 +41,11 @@ public class Player {
     }
 
     public boolean isOut() {
-        return out;
+        return isOut;
     }
 
     public void setOut() {
-        out = true;
+        isOut = true;
     }
 
     public void setAttackThisTurn() {

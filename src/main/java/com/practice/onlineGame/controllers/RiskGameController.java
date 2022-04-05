@@ -40,22 +40,30 @@ public class RiskGameController {
 
     @PostMapping("/{tag}/add_player/{player_name}")
     public ResponseEntity<?> addPlayer(@PathVariable String tag, @PathVariable String player_name) {
-        RiskGame game = riskGameService.findByTag(tag);
-
-        game.addPlayer(new Player(player_name));
-
+        RiskGame game = riskGameService.addPlayer(tag, player_name);
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
     //Happy path
     @PostMapping("/{tag}/start_game")
     public ResponseEntity<?> startGame(@PathVariable String tag) {
 
-        RiskGame game = riskGameService.findByTag(tag);
-        game.startGame();
-        //Randomly populate
+        RiskGame game = riskGameService.startRiskGame(tag);
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
 
+    @PostMapping("/{tag}/reinforce_troops/{country}/{number_troops}")
+    public ResponseEntity<?> reinforceTroops(@PathVariable String tag, @PathVariable String country,
+                                       @PathVariable Integer number_troops) {
+        RiskGame game = riskGameService.reinforceTroops(tag, country, number_troops);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
+    @PostMapping("/{tag}/attack/{attack_country}/{number_troops}/{defend_country}")
+    public ResponseEntity<?> reinforceTroops(@PathVariable String tag, @PathVariable String attack_country,
+                                             @PathVariable Integer number_troops, @PathVariable String defend_country) {
+        RiskGame game = riskGameService.attack(tag, attack_country, number_troops, defend_country);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
     @Autowired
     public RiskGameController(RiskGameRepository riskGameRepository) {
         this.errorCheck = new ErrorCheckService();

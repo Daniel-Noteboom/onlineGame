@@ -13,8 +13,20 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler
-    public final ResponseEntity<Object> handleProjectIdException(GameTagException ex, WebRequest request) {
+    public final ResponseEntity<Object> handleGameTagException(GameTagException ex, WebRequest request) {
         GameTagExceptionResponse exceptionResponse = new GameTagExceptionResponse(ex.getMessage());
+        return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleReinforcementException(ReinforcementException ex, WebRequest request) {
+        ReinforcementExceptionResponse exceptionResponse = new ReinforcementExceptionResponse(ex.getMessage());
+        return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleAttackException(AttackException ex, WebRequest request) {
+        AttackExceptionResponse exceptionResponse = new AttackExceptionResponse(ex.getMessage());
         return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 }
