@@ -29,6 +29,24 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         AttackExceptionResponse exceptionResponse = new AttackExceptionResponse(ex.getMessage());
         return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleFortifyException(FortifyException ex, WebRequest request) {
+        FortifyExceptionResponse exceptionResponse = new FortifyExceptionResponse(ex.getMessage());
+        return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleCardsException(CardsException ex, WebRequest request) {
+        CardsExceptionResponse exceptionResponse = new CardsExceptionResponse(ex.getMessage());
+        return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleDefatedTroopsException(DefeatedTroopsException ex, WebRequest request) {
+        DefeatedTroopsExceptionResponse exceptionResponse = new DefeatedTroopsExceptionResponse(ex.getMessage());
+        return new ResponseEntity(exceptionResponse, HttpStatus.BAD_REQUEST);
+    }
 }
 
 

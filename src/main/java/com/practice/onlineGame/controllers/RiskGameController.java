@@ -1,6 +1,5 @@
 package com.practice.onlineGame.controllers;
 
-import com.practice.onlineGame.models.risk.Player;
 import com.practice.onlineGame.models.risk.RiskGame;
 import com.practice.onlineGame.repositories.RiskGameRepository;
 import com.practice.onlineGame.services.ErrorCheckService;
@@ -11,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
+import java.util.Arrays;
 
 @RequestMapping("/game/risk")
 @RestController
@@ -64,6 +64,42 @@ public class RiskGameController {
         RiskGame game = riskGameService.attack(tag, attack_country, number_troops, defend_country);
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
+
+    @PostMapping("/{tag}/end_attack")
+    public ResponseEntity<?> endAttack(@PathVariable String tag) {
+        RiskGame game = riskGameService.endAttack(tag);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
+    @PostMapping("/{tag}/fortify/{from_country}/{number_troops}/{to_country}")
+    public ResponseEntity<?> fortifyTroops(@PathVariable String tag, @PathVariable String from_country,
+                                             @PathVariable Integer number_troops, @PathVariable String to_country) {
+        RiskGame game = riskGameService.fortify(tag, from_country, number_troops, to_country);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
+    @PostMapping("/{tag}/turn_in_cards_auto")
+    public ResponseEntity<?> turnInCardsAuto(@PathVariable String tag) {
+        RiskGame game = riskGameService.turnInCards(tag);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
+    @PostMapping("/{tag}/turn_in_cards")
+    public ResponseEntity<?> turnInCards(@PathVariable String tag, @RequestBody Integer[] cardIndexes,
+                                         BindingResult result) {
+        ResponseEntity<?> errorMap = errorCheck.errorCheck(result);
+        if(errorMap != null) return errorMap;
+        RiskGame game = riskGameService.turnInCards(tag, (Arrays.asList(cardIndexes)));
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
+
+    @PostMapping("/{tag}/set_defeated_troops/{number_troops}")
+    public ResponseEntity<?> setTroopsDefeatedCountry(@PathVariable String tag, @PathVariable Integer number_troops) {
+        RiskGame game = riskGameService.setTroopsDefeatedCountry(tag, number_troops);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+    
     @Autowired
     public RiskGameController(RiskGameRepository riskGameRepository) {
         this.errorCheck = new ErrorCheckService();

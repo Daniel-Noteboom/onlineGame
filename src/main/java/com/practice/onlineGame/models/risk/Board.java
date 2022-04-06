@@ -77,6 +77,10 @@ public class Board {
         }
     }
 
+    public Set<String> countryNames() {
+        return countryNames.keySet();
+    }
+
     private Country getOrCreateCountry(String countryName) {
         if(!countryNames.containsKey(countryName)) {
             Country country = new Country(countryName);
@@ -188,7 +192,52 @@ public class Board {
     public int numberCountries() {
         return countryNames.keySet().size();
     }
+    /**
+     * Finds all the countries that are connected for the given country. Connected means that the occupant can
+     * trace a path to these countries without having to enter enemy territory
+     * @param countryName The name of the country we're looking for connected countries
+     * @return The set of countryNames that are connected
+     */
+    public Set<String> connectedCountries(String countryName) {
+        Country country = getCountry(countryName);
+        Set<Country> connectedCountries = new HashSet<Country>();
+        Set<Country> countriesCovered = new HashSet<Country>();
+        //Add this country in temporarily to find all the connected countries
+        connectedCountries.add(country);
+        connectedCountries(country, connectedCountries, countriesCovered);
+        Set<String> countryNames = new HashSet<>();
+        for(Country c: connectedCountries) {
+            countryNames.add(c.getName());
+        }
+        //We need to remove the country itself now!
+        countryNames.remove(countryName);
+        return countryNames;
+    }
 
+    /**
+     * Private recursive method that returns all the connected countries for the given country. For definition of
+     * what connected means refer to the non-recursive method with less parameters with the same name
+     * @param country The country that we're looking for connected countries for
+     * @param connectedCountries The countries that are connected together
+     * @param countriesCovered The countries that have been covered on the board.
+     */
+    private void connectedCountries(Country country, Set<Country> connectedCountries,
+                                    Set<Country> countriesCovered) {
+        //Immediately add the country to covered so that we don't keep hitting it in recursion
+        countriesCovered.add(country);
+        for(Country borderCountry: country.getBorderingCountries()) {
+            if(country.getOccupant() == borderCountry.getOccupant()) {
+                //If we haven't covered this country we need to add and call the recursive method to find other countries
+                if (!(countriesCovered.contains(borderCountry))) {
+                    connectedCountries.add(borderCountry);
+                    connectedCountries(borderCountry, connectedCountries, countriesCovered);
+                }
+                //Add the countries where the occupant is not correct to covered
+            } else {
+                countriesCovered.add(borderCountry);
+            }
+        }
+    }
     /**
      * Returns the number of troops a player gets from continent bonuses
      * @param player The player that you're returning troops from continents for

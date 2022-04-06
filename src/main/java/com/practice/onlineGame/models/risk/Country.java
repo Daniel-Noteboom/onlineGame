@@ -1,6 +1,8 @@
 package com.practice.onlineGame.models.risk;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
@@ -79,6 +81,11 @@ public class Country {
 
     public boolean borders(Country c) {
         return borderingCountries.contains(c);
+    }
+
+    @JsonIgnore
+    public Set<Country> getBorderingCountries() {
+        return borderingCountries;
     }
     @Override
     public String toString() {
