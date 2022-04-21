@@ -12,16 +12,15 @@ public class Player {
     @Column(updatable = false, nullable = false)
     protected Long id;
     private String name;
-    @JsonIgnore
     @JoinTable(name = "risk_game_cards",
             joinColumns = {@JoinColumn(name = "card_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "player_id", referencedColumnName = "id")})
     @OrderColumn
-    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Card> cards;
     private boolean isOut;
     private boolean attackThisTurn;
-
+    private String color;
     public Player() {
 
     }
@@ -30,6 +29,14 @@ public class Player {
         this.isOut = false;
         this.cards = new ArrayList<Card>();
         this.attackThisTurn = false;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     public String getName() {

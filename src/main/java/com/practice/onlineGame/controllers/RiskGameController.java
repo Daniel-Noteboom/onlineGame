@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
-import java.util.Arrays;
+import java.util.*;
 
 @RequestMapping("/game/risk")
 @RestController
@@ -59,7 +59,7 @@ public class RiskGameController {
     }
 
     @PostMapping("/{tag}/attack/{attack_country}/{number_troops}/{defend_country}")
-    public ResponseEntity<?> reinforceTroops(@PathVariable String tag, @PathVariable String attack_country,
+    public ResponseEntity<?> attackCountry(@PathVariable String tag, @PathVariable String attack_country,
                                              @PathVariable Integer number_troops, @PathVariable String defend_country) {
         RiskGame game = riskGameService.attack(tag, attack_country, number_troops, defend_country);
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
@@ -99,7 +99,19 @@ public class RiskGameController {
         RiskGame game = riskGameService.setTroopsDefeatedCountry(tag, number_troops);
         return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
     }
-    
+
+    @GetMapping("/{tag}/opposing/{country}")
+    public ResponseEntity<?> getOpposingCountries(@PathVariable String tag, @PathVariable String country) {
+        Set<String> borderingCountries = riskGameService.getOpposingCountries(tag, country);
+        return new ResponseEntity<Set<String>>(borderingCountries, HttpStatus.OK);
+    }
+
+    @GetMapping("/{tag}/fortify/{country}")
+    public ResponseEntity<?> getFortifyPossibilities(@PathVariable String tag, @PathVariable String country) {
+        Set<String> fortifyPossibilities = riskGameService.fortifyPossibilities(tag, country);
+        return new ResponseEntity<Set<String>>(fortifyPossibilities, HttpStatus.OK);
+    }
+
     @Autowired
     public RiskGameController(RiskGameRepository riskGameRepository) {
         this.errorCheck = new ErrorCheckService();

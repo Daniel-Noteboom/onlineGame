@@ -1,6 +1,7 @@
 package com.practice.onlineGame.models.risk;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.practice.onlineGame.models.Game;
 
 import javax.persistence.*;
@@ -16,16 +17,17 @@ public class RiskGame extends Game {
     public static final int BONUS_TROOPS_COUNTRY = 2;
     private boolean needTurnInCards = false;
     private boolean turnInCardsTest = false;
+    private static final String[] COLORS = {"red", "yellow", "blue", "green", "orange", "purple"};
     //Keeps track of the different cards.
 
-    @OneToMany
+    @OneToMany(cascade=CascadeType.ALL)
     @JoinTable(name = "risk_card_deck",
             joinColumns = {@JoinColumn(name = "card_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "game_id", referencedColumnName = "id")})
     @OrderColumn
     private List<Card> deck = new ArrayList<>();
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "risk_card_discard",
             joinColumns = {@JoinColumn(name = "card_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "game_id", referencedColumnName = "id")})
@@ -56,7 +58,18 @@ public class RiskGame extends Game {
     private int startingPlayerIndex;
 
     //Keeps track of which players turn it is
+    @JsonIgnore
     private int currentPlayerIndex;
+
+    private String currentPlayerName;
+
+    public String getCurrentPlayerName() {
+        return currentPlayerName;
+    }
+
+    public void setCurrentPlayerName(String currentPlayerName) {
+        this.currentPlayerName = currentPlayerName;
+    }
 
     //Keeps track of how many troops are left in the draft phase
     private int currentReinforceTroopsNumber;
@@ -124,6 +137,7 @@ public class RiskGame extends Game {
     }
 
     public void addPlayer(Player p) {
+        p.setColor(COLORS[players.size()]);
         players.add(p);
     }
 
@@ -149,7 +163,24 @@ public class RiskGame extends Game {
     public int getTroopCount(String country) {
         return board.getTroopCount(country);
     }
+    //Returns bordering countries with different occupant of concerned country
+    public Set<String> getOpposingCountries(String country) {
+        return board.opposingCountries(country);
+    }
 
+    /**
+     * Calculates all the fortify possibilities for the current country
+     *
+     * @param country The name of the country to find the reinforcement possibilities for
+     * @return Set<String> that contains the reinforcement possibilities as a Set of the country names
+     */
+    public Set<String> fortifyPossibilities(String country) {
+        if(board.getOccupant(country) != players.get(currentPlayerIndex) || phase != Phase.FORTIFY) {
+            return new HashSet<String>();
+        }
+        return board.connectedCountries(country);
+
+    }
 
     /**
      *     Creates a randomly populated board with the appropriate number of troops. The first player has priority.
@@ -161,8 +192,14 @@ public class RiskGame extends Game {
     public void startGame() {
         startingPlayerIndex = (int) (Math.random() * players.size());
         currentPlayerIndex = startingPlayerIndex;
+        currentPlayerName = players.get(currentPlayerIndex).getName();
         randomlyPopulateBoard();
     }
+
+    public List<Player> getPlayers() {
+        return players;
+    }
+
     private void randomlyPopulateBoard() {
         board.clearTroops();
         int numberTroopsAdd = STARTING_TROOPS[players.size() - MINIMUM_PLAYERS];
@@ -739,6 +776,7 @@ public class RiskGame extends Game {
     //Helper method Changes board state so that is now the next player's turn.
     private void nextPlayer() {
         currentPlayerIndex = currentPlayerIndex == players.size() - 1 ? 0 : currentPlayerIndex + 1;
+        currentPlayerName = players.get(currentPlayerIndex).getName();
         if(players.get(currentPlayerIndex).isOut()) {
             nextPlayer();
         }

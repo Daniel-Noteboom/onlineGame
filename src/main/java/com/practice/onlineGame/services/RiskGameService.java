@@ -7,14 +7,20 @@ import com.practice.onlineGame.repositories.RiskGameRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class RiskGameService {
 
     private final RiskGameRepository riskGameRepository;
     public RiskGame createRiskGame(RiskGame game) {
-        return save(game);
+        try {
+            return save(game);
+        } catch(Exception e) {
+            throw new GameTagException("Game tag '" + game.getTag() + "' already exists");
+        }
     }
 
     @Autowired
@@ -33,7 +39,6 @@ public class RiskGameService {
 
     public RiskGame addPlayer(String tag, String playerName) {
         RiskGame game = findByTag(tag);
-
         game.addPlayer(new Player(playerName));
         save(game);
         return game;
@@ -49,6 +54,7 @@ public class RiskGameService {
         return riskGameRepository.save(game);
     }
     public RiskGame reinforceTroops(String tag, String country, int troops) {
+        country = sanitizeCountry(country);
         RiskGame game = findByTag(tag);
         String errors = game.reinforceTroops(troops, country);
         if(!errors.isEmpty()) {
@@ -58,7 +64,13 @@ public class RiskGameService {
         return game;
     }
 
+    private String sanitizeCountry(String country) {
+        return Arrays.stream(country.split("_"))
+                .reduce("", (s1, s2) -> s1 + " " + s2.substring(0,1).toUpperCase() + s2.substring(1)).substring(1);
+    }
     public RiskGame attack(String tag, String attackCountry, int numberDice, String defendCountry) {
+        attackCountry = sanitizeCountry(attackCountry);
+        defendCountry = sanitizeCountry(defendCountry);
         RiskGame game = findByTag(tag);
         String errors = game.attack(attackCountry, numberDice, defendCountry);
         if(!errors.isEmpty()) {
@@ -79,6 +91,8 @@ public class RiskGameService {
     }
 
     public RiskGame fortify(String tag, String fromCountry, int numberTroops, String toCountry) {
+        fromCountry = sanitizeCountry(fromCountry);
+        toCountry = sanitizeCountry(toCountry);
         RiskGame game = findByTag(tag);
         String errors = game.fortifyTroops(fromCountry, toCountry, numberTroops);
         if(!errors.isEmpty()) {
@@ -118,4 +132,13 @@ public class RiskGameService {
         return game;
     }
 
+    public Set<String> getOpposingCountries(String tag, String country) {
+        RiskGame game = findByTag(tag);
+        return game.getOpposingCountries(sanitizeCountry(country));
+    }
+
+    public Set<String> fortifyPossibilities(String tag, String country) {
+        RiskGame game = findByTag(tag);
+        return game.fortifyPossibilities(sanitizeCountry(country));
+    }
 }
