@@ -102,6 +102,13 @@ public class RiskGameService {
         return game;
     }
 
+    public RiskGame endFortify(String tag) {
+        RiskGame game = findByTag(tag);
+        game.endFortifyPhase();
+        save(game);
+        return game;
+    }
+
     public RiskGame setTroopsDefeatedCountry(String tag, int numberTroops) {
         RiskGame game = findByTag(tag);
         String errors = game.setTroopsDefeatedCountry(numberTroops);
@@ -114,7 +121,7 @@ public class RiskGameService {
 
     public RiskGame turnInCards(String tag) {
         RiskGame game = findByTag(tag);
-        String errors = game.turnInCards(game.turnInCards());
+        String errors = game.turnInCards(game.possibleTurnInCards());
         if(!errors.isEmpty()) {
             throw new CardsException(errors);
         }

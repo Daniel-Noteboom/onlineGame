@@ -53,6 +53,7 @@ public class Player {
 
     public void setOut() {
         isOut = true;
+        cards = new ArrayList<>();
     }
 
     public void setAttackThisTurn() {
@@ -68,7 +69,16 @@ public class Player {
     }
 
     public void addCard(Card card) {
+        card.setCurrentIndex(cards.size());
         cards.add(card);
+    }
+
+    public void removeCard(Card card) {
+        int index = card.getCurrentIndex();
+        cards.remove(card);
+        for(int i = index; i < cards.size(); i++) {
+            cards.get(i).setCurrentIndex(i);
+        }
     }
 
     @Override

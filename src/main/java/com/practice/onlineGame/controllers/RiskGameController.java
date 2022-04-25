@@ -112,6 +112,12 @@ public class RiskGameController {
         return new ResponseEntity<Set<String>>(fortifyPossibilities, HttpStatus.OK);
     }
 
+    @PostMapping("/{tag}/end_fortify")
+    public ResponseEntity<?> endFortify(@PathVariable String tag) {
+        RiskGame game = riskGameService.endFortify(tag);
+        return new ResponseEntity<RiskGame>(game,HttpStatus.OK);
+    }
+
     @Autowired
     public RiskGameController(RiskGameRepository riskGameRepository) {
         this.errorCheck = new ErrorCheckService();

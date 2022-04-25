@@ -275,7 +275,7 @@ public class Board {
         return troops;
     }
 
-    private Country getCountry(String country) {
+    public Country getCountry(String country) {
         return countryNames.get(country);
     }
 }

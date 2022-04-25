@@ -9,6 +9,7 @@ public class Card {
     @Column(updatable = false, nullable = false)
     protected Long id;
 
+    private int currentIndex;
     public enum Type {
         INFANTRY,
         CALVARY,
@@ -59,6 +60,14 @@ public class Card {
 
     public String getCountry() {
         return country;
+    }
+
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    public void setCurrentIndex(int currentIndex) {
+        this.currentIndex = currentIndex;
     }
 
     @Override

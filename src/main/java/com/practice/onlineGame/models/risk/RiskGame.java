@@ -16,7 +16,9 @@ public class RiskGame extends Game {
     public static final int CARD_TURN_IN_SIZE = 3;
     public static final int BONUS_TROOPS_COUNTRY = 2;
     private boolean needTurnInCards = false;
+    private boolean canTurnInCards = false;
     private boolean turnInCardsTest = false;
+
     private static final String[] COLORS = {"red", "yellow", "blue", "green", "orange", "purple"};
     //Keeps track of the different cards.
 
@@ -137,8 +139,10 @@ public class RiskGame extends Game {
     }
 
     public void addPlayer(Player p) {
-        p.setColor(COLORS[players.size()]);
-        players.add(p);
+        if(phase == Phase.PREGAME) {
+            p.setColor(COLORS[players.size()]);
+            players.add(p);
+        }
     }
 
     public void removePlayer(Player p) {
@@ -200,7 +204,13 @@ public class RiskGame extends Game {
         return players;
     }
 
-    private void randomlyPopulateBoard() {
+    /**
+     *     Creates a randomly populated board with the appropriate number of troops. The first player has priority.
+     *     Each country is randomly populated according to the rules of Risk. No country can have more than one troop
+     *     until all countries have been populated with at least one troop and troops are added one at at time beginning
+     *     with the starting player. Clears the board if there is already troops there
+     */
+    public void randomlyPopulateBoard() {
         board.clearTroops();
         int numberTroopsAdd = STARTING_TROOPS[players.size() - MINIMUM_PLAYERS];
         int countriesOccupied = 0;
@@ -355,13 +365,10 @@ public class RiskGame extends Game {
             Player occupantDefeated = getOccupant(defendCountry);
             board.changeOccupant(defendCountry, players.get(currentPlayerIndex), 0);
             if(board.playerFinished(occupantDefeated)) {
-                occupantDefeated.setOut();
                 for(Card card: occupantDefeated.getCards()) {
                     players.get(currentPlayerIndex).addCard(card);
                 }
-                if(players.get(currentPlayerIndex).getCards().size() >= MAX_CARDS) {
-                    needTurnInCards = true;
-                }
+                occupantDefeated.setOut();
             }
             if(isGameOver()) {
                 phase = Phase.ENDGAME;
@@ -423,6 +430,16 @@ public class RiskGame extends Game {
         return errors;
     }
 
+
+    //Since a player can choose not to participate in the fortify phase, they may call this method to skip this phase.
+    public void endFortifyPhase() {
+        if(phase == Phase.FORTIFY) {
+            addAttackCards();
+            players.get(currentPlayerIndex).unsetAttackThisTurn();
+            changePhase();
+        }
+    }
+
     //Handles errors for the fortify troops method
     private String fortifyTroopsErrorHandling(String countryFrom, String countryTo, int troops) {
         String errors = "";
@@ -460,8 +477,7 @@ public class RiskGame extends Game {
         if(errors.isEmpty()) {
             board.reduceTroops(countryFrom, troops);
             board.increaseTroops(countryTo, troops);
-            addAttackCards();
-            changePhase();
+            endFortifyPhase();
         }
         return errors;
     }
@@ -532,6 +548,7 @@ public class RiskGame extends Game {
             minimumTroopsDefeatedCountry = 0;
             currentVictorCountry = null;
             currentDefeatedCountry = null;
+            setNeedTurnInCards();
         }
         return errors;
     }
@@ -549,19 +566,29 @@ public class RiskGame extends Game {
             errors += "The number of troops must be less than " + getTroopCount(currentVictorCountry);
         } else if(needTurnInCards) {
             errors += "You still need to turn in cards since you have at least " + MAX_CARDS;
-        } else if (currentReinforceTroopsNumber > 0) {
-            errors += "You still need to reinforce since you have " + currentReinforceTroopsNumber +
-                    " troops";
         }
         return errors;
     }
+
+    /**
+     * Determines whether you can turn in cards without actually turning them in
+     * @param indexes The indexes of the cards in the current players hand to turn in
+     * @return true if possible to turn in these cards, false otherwise
+     */
+    public boolean canTurnInCards(List<Integer> indexes) {
+        turnInCardsTest = true;
+        String errors = turnInCards(indexes);
+        turnInCardsTest = false;
+        return errors.isEmpty();
+    }
+
     /**
      * Determines if there are cards that can be turned in, and if there is, returns the indexes of these cards. Assumes that
      * you are looking for cards for the current given player, and does not check to make sure that you are in the right phase to
      * turn in cards, but simply looks at the available cards in the deck
      * @return Sample cards that can be turned in, or an empty list if it is not possible to turn in cards.
      */
-    public List<Integer> turnInCards() {
+    public List<Integer> possibleTurnInCards() {
         Map<Card.Type, List<Integer>> cardTypeCount = new HashMap<>();
         List<Card> cards = players.get(currentPlayerIndex).getCards();
         for(int i = 0; i < cards.size(); i++) {
@@ -628,14 +655,8 @@ public class RiskGame extends Game {
      *
      */
     public String turnInCards(List<Integer> turnInCardsIndexes) {
-        if(turnInCardsTest) {
-            System.out.println("Testing cards started");
-        }
         String errors = turnInCardsErrorHandling(turnInCardsIndexes);
         if(!errors.isEmpty()) {
-            if(turnInCardsTest) {
-                System.out.println("Testing cards finished");
-            }
             return errors;
         }
         Set<Card.Type> typeSeen = new HashSet<>();
@@ -651,14 +672,11 @@ public class RiskGame extends Game {
                 errors += "ERROR: Player does not have that many cards ";
                 errors += "Desired card number: " + (i + 1) + " ";
                 errors += "Actual number cards: " + playerCards.size();
-                if(turnInCardsTest) {
-                    System.out.println("Testing cards finished");
-                }
                 return errors;
             }
             Card currentCard = playerCards.get(i);
             turnInCards.add(currentCard);
-            if(firstCountryOccupied == null && board.getOccupant(currentCard.getCountry()).equals(players.get(currentPlayerIndex))) {
+            if(firstCountryOccupied == null && currentCard.getType() != Card.Type.ALL && board.getOccupant(currentCard.getCountry()).equals(players.get(currentPlayerIndex))) {
                 firstCountryOccupied = currentCard.getCountry();
             }
             if(currentCard.getType() != Card.Type.ALL && typeSeen.contains(currentCard.getType())) {
@@ -676,13 +694,10 @@ public class RiskGame extends Game {
         if(!(allDifferent || allSame)) {
             errors += "ERROR: Cards must either all be the same or all be different ";
             errors += "Types seen: " + typeSeen;
-            if(turnInCardsTest) {
-                System.out.println("Testing cards finished");
-            }
             return errors;
         }
+        //Finish if testing cards
         if(turnInCardsTest) {
-            System.out.println("Testing cards finished");
             return errors;
         }
         if(allDifferent) {
@@ -700,11 +715,16 @@ public class RiskGame extends Game {
         }
         for(Card c: turnInCards) {
             discardPile.add(c);
-            players.get(currentPlayerIndex).getCards().remove(c);
+            players.get(currentPlayerIndex).removeCard(c);
         }
         if(players.get(currentPlayerIndex).getCards().size() < MAX_CARDS && needTurnInCards) {
             needTurnInCards = false;
         }
+        setCanTurnInCards();
+        if(phase == Phase.ATTACK && !needTurnInCards) {
+            phase = Phase.DRAFT;
+        }
+        //Manually change phase to draft so that player can reinforce troops
         return errors;
     }
 
@@ -757,6 +777,7 @@ public class RiskGame extends Game {
             phase = Phase.DRAFT;
             setInitialReinforceTroopNumber();
             setNeedTurnInCards();
+            setCanTurnInCards();
         } else if(phase == Phase.DRAFT) {
             phase = Phase.ATTACK;
         } else if(phase == Phase.ATTACK) {
@@ -769,6 +790,7 @@ public class RiskGame extends Game {
             nextPlayer();
             setInitialReinforceTroopNumber();
             setNeedTurnInCards();
+            setCanTurnInCards();
         }
     }
 
@@ -813,5 +835,49 @@ public class RiskGame extends Game {
             diceRolls.add((int) (Math.random() * DICE_SIDES + 1));
         }
         return diceRolls;
+    }
+
+    public int getMinimumTroopsDefeatedCountry() {
+        return minimumTroopsDefeatedCountry;
+    }
+
+    public void setMinimumTroopsDefeatedCountry(int minimumTroopsDefeatedCountry) {
+        this.minimumTroopsDefeatedCountry = minimumTroopsDefeatedCountry;
+    }
+
+    public String getCurrentDefeatedCountry() {
+        return currentDefeatedCountry;
+    }
+
+    public void setCurrentDefeatedCountry(String currentDefeatedCountry) {
+        this.currentDefeatedCountry = currentDefeatedCountry;
+    }
+
+    public String getCurrentVictorCountry() {
+        return currentVictorCountry;
+    }
+
+    public void setCurrentVictorCountry(String currentVictorCountry) {
+        this.currentVictorCountry = currentVictorCountry;
+    }
+
+    public boolean isNeedTurnInCards() {
+        return needTurnInCards;
+    }
+
+    public void setNeedTurnInCards(boolean needTurnInCards) {
+        this.needTurnInCards = needTurnInCards;
+    }
+
+    private void setCanTurnInCards() {
+        canTurnInCards = canTurnInCards(possibleTurnInCards());
+    }
+
+    public boolean isCanTurnInCards() {
+        return canTurnInCards;
+    }
+
+    public void setCanTurnInCards(boolean canTurnInCards) {
+        this.canTurnInCards = canTurnInCards;
     }
 }

@@ -2,6 +2,7 @@ package com.practice.onlineGame.models.risk;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ public class Country {
             inverseJoinColumns = {@JoinColumn(name = "bordering_country_id", referencedColumnName = "id")})
     private Set<Country> borderingCountries;
 
+    @JsonIgnoreProperties({"cards", "color", "out"})
     @OneToOne(cascade = CascadeType.REFRESH)
     @JoinColumn(name="player_id")
     private Player occupant;
